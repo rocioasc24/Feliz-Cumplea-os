@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+  <title>Pistola de patos 🔫</title>
+  <style>
+    html, body { margin: 0; height: 100%; background: #120d44; color: #fff; font-family: system-ui, sans-serif; overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none; }
+    .pantalla { position: fixed; inset: 0; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 18px; padding: 24px; text-align: center; }
+    .activa { display: flex; }
+    h1 { font-size: 1.6rem; margin: 0; }
+    p { opacity: .85; margin: 0; line-height: 1.5; max-width: 340px; }
+    button { font-size: 1.2rem; font-weight: 700; border: none; border-radius: 40px; padding: 16px 36px; background: linear-gradient(135deg, #ffe08a, #ffb347); color: #2b1800; }
+    #gatillo { width: 70vw; height: 70vw; max-width: 330px; max-height: 330px; border-radius: 50%; background: radial-gradient(circle at 40% 35%, #ff6b6b, #c0182b); font-size: 2rem; color: #fff; box-shadow: 0 0 0 10px rgba(255,255,255,.08), 0 10px 40px rgba(0,0,0,.5); }
+    #gatillo:active { transform: scale(.93); }
+    #centrar { background: transparent; border: 1px solid rgba(255,255,255,.4); color: #fff; font-size: 1rem; padding: 10px 22px; }
+  </style>
+</head>
+<body>
+  <section id="p-inicio" class="pantalla activa">
+    <h1>🔫 Pistola de patos</h1>
+    <p>Sostén el teléfono acostado, con la pantalla hacia arriba y la parte de arriba apuntando a la computadora.</p>
+    <button id="conectar">Conectar pistola</button>
+    <p id="estado-inicio"></p>
+  </section>
+
+  <section id="p-pistola" class="pantalla">
+    <p>Conectado ✅</p>
+    <button id="gatillo">¡DISPARA!</button>
+    <button id="centrar">🎯 Centrar mira</button>
+    <p>Si la mira se desvía, apunta al centro de la pantalla y toca “Centrar mira”.</p>
+  </section>
+
+  <script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
+  <script>
+    const id = new URLSearchParams(location.search).get('id');
+    const $ = i => document.getElementById(i);
+    let conn = null, alpha0 = null, beta0 = null, ultimo = { a: 0, b: 0 }, enviado = 0, sx = 0.5, sy = 0.5;
+
+    function mostrar(i) { document.querySelectorAll('.pantalla').forEach(p => p.classList.toggle('activa', p.id === i)); }
+    function dif(a, b) { let d = a - b; while (d > 180) d -= 360; while (d < -180) d += 360; return d; }
+
+    // Convierte el giro del teléfono en la posición de la mira
+    function orientacion(e) {
+      if (e.alpha == null) return;
+      ultimo = { a: e.alpha, b: e.beta };
+      if (alpha0 === null) { alpha0 = e.alpha; beta0 = e.beta; }
+      const x = 0.5 - dif(e.alpha, alpha0) / 40;   // girar 20° a cada lado recorre toda la pantalla
+      const y = 0.5 - (e.beta - beta0) / 28;
+      sx += (x - sx) * 0.5;
+      sy += (y - sy) * 0.5;
+      const ahora = performance.now();
+      if (conn && conn.open && ahora - enviado > 30) {
+        enviado = ahora;
+        conn.send({ tipo: 'mira', x: Math.max(0, Math.min(1, sx)), y: Math.max(0, Math.min(1, sy)) });
+      }
+    }
+
+    function disparar() {
+      if (conn && conn.open) conn.send({ tipo: 'disparo' });
+      if (navigator.vibrate) navigator.vibrate(60);
+    }
+
+    $('conectar').onclick = async () => {
+      if (!id) { $('estado-inicio').textContent = 'Falta el código. Escanea otra vez el QR de la computadora.'; return; }
+      try {
+        if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+          const r = await DeviceOrientationEvent.requestPermission(); // necesario en iPhone
+          if (r !== 'granted') throw new Error('sin permiso');
+        }
+      } catch (e) {
+        $('estado-inicio').textContent = 'Necesito permiso para usar el movimiento del teléfono.';
+        return;
+      }
+      addEventListener('deviceorientation', orientacion);
+      try { if (navigator.wakeLock) await navigator.wakeLock.request('screen'); } catch (e) {}
+      $('estado-inicio').textContent = 'Conectando…';
+      const peer = new Peer();
+      peer.on('open', () => {
+        conn = peer.connect(id, { reliable: true });
+        conn.on('open', () => { alpha0 = null; mostrar('p-pistola'); });
+        conn.on('close', () => { mostrar('p-inicio'); $('estado-inicio').textContent = 'Se desconectó. Toca “Conectar pistola” otra vez.'; });
+      });
+      peer.on('error', e => {
+        $('estado-inicio').textContent = 'No se pudo conectar (' + e.type + '). Revisa que el juego siga abierto en la computadora.';
+      });
+    };
+
+    $('gatillo').addEventListener('pointerdown', e => { e.preventDefault(); disparar(); });
+    $('centrar').onclick = () => {
+      alpha0 = ultimo.a; beta0 = ultimo.b; sx = 0.5; sy = 0.5;
+      if (navigator.vibrate) navigator.vibrate(20);
+    };
+  </script>
+</body>
+</html>
