@@ -2,7 +2,7 @@
 //  SOPLIDO (micrófono), MÚSICA, LAS 28 VELAS Y EL PASTEL
 // =====================================================
 const TOTAL_VELAS = 28;
-
+ 
 // Escribe un mensaje de dos líneas letra por letra
 function escribirMensaje(el, a = '', b = '', vel = 42) {
   el._token = (el._token || 0) + 1;
@@ -22,7 +22,7 @@ function escribirMensaje(el, a = '', b = '', vel = 42) {
     paso();
   });
 }
-
+ 
 // ---------- Detección del soplido con el micrófono ----------
 const Soplido = {
   ok: false,
@@ -30,7 +30,7 @@ const Soplido = {
   ambiente: 0,
   analizador: null,
   datos: null,
-
+ 
   async iniciar() {
     try {
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) throw new Error('Navegador sin micrófono');
@@ -50,7 +50,7 @@ const Soplido = {
     }
     return this.ok;
   },
-
+ 
   nivel() {
     if (!this.ok) return 0;
     this.analizador.getFloatTimeDomainData(this.datos);
@@ -58,7 +58,7 @@ const Soplido = {
     for (const v of this.datos) s += v * v;
     return Math.sqrt(s / this.datos.length);
   },
-
+ 
   // Escucha el cuarto (con la música sonando) para saber cuánto ruido hay
   calibrar() {
     return new Promise(res => {
@@ -79,7 +79,7 @@ const Soplido = {
     });
   },
 };
-
+ 
 // ---------- Música: "Feliz cumpleaños" en cajita musical ----------
 const Musica = {
   activo: false,
@@ -95,7 +95,7 @@ const Musica = {
     [77, .75], [77, .25], [76, 1], [72, 1], [74, 1], [72, 3],
   ],
   BAJO: [[1, 48], [4, 43], [7, 43], [10, 48], [13, 48], [16, 41], [20, 48], [22, 43], [23, 48]],
-
+ 
   iniciar() {
     if (this.activo || !Sonido.ctx) return;
     const c = Sonido.ctx;
@@ -105,7 +105,7 @@ const Musica = {
     this.activo = true;
     this.programar(c.currentTime + 0.3);
   },
-
+ 
   nota(midi, t0, dur, vol, tipo) {
     const c = Sonido.ctx;
     const o = c.createOscillator(), g = c.createGain();
@@ -117,7 +117,7 @@ const Musica = {
     o.connect(g); g.connect(this.gain);
     o.start(t0); o.stop(t0 + dur + 0.05);
   },
-
+ 
   programar(t0) {
     if (!this.activo) return;
     let b = 0;
@@ -131,7 +131,7 @@ const Musica = {
     const siguiente = t0 + this.CICLO * this.PULSO;
     this.temporizador = setTimeout(() => this.programar(siguiente), Math.max(0, (siguiente - Sonido.ctx.currentTime - 1) * 1000));
   },
-
+ 
   detener() {
     if (!this.activo) return;
     this.activo = false;
@@ -142,14 +142,14 @@ const Musica = {
     g.gain.linearRampToValueAtTime(0, c.currentTime + 2.5);
     setTimeout(() => g.disconnect(), 3000);
   },
-
+ 
   alternar() {
     this.silencio = !this.silencio;
     if (this.gain && this.activo) this.gain.gain.value = this.silencio ? 0 : 0.5;
     return this.silencio;
   },
 };
-
+ 
 // ---------- Las 28 velas, una por una ----------
 const Velas = {
   i: 0,
@@ -161,7 +161,7 @@ const Velas = {
   fase: 'normal',   // en la última vela: 'normal' → 'r' (tecla R) → 'lista'
   teclasR: 0,
   colores: ['#ff5fa2', '#5fc8ff', '#ffd45c', '#9b7bff', '#5fe0a0', '#ff8a5c', '#ff6b6b'],
-
+ 
   async iniciar(alTerminar) {
     this.alTerminar = alTerminar;
     this.i = 0;
@@ -174,7 +174,7 @@ const Velas = {
     this.nota = document.getElementById('nota-soplo');
     this.pantalla = document.getElementById('pantalla-velas');
     this.vela.style.opacity = '0';
-
+ 
     this.humo.innerHTML = '';
     for (let k = 0; k < 10; k++) {
       const s = document.createElement('span');
@@ -182,30 +182,30 @@ const Velas = {
       s.style.setProperty('--dx', (Math.random() * 50 - 25) + 'px');
       this.humo.appendChild(s);
     }
-
+ 
     // Plan B sin micrófono: mantener presionada la vela o la barra espaciadora
     const esc = document.getElementById('escenario-vela');
-    esc.addEventListener('pointerdown', () => { this.presionando = true; if (this.fase === 'r') this.teclaR(); });
+    esc.addEventListener('pointerdown', () => { this.presionando = true; });
     addEventListener('pointerup', () => { this.presionando = false; });
     addEventListener('keydown', e => { if (e.code === 'KeyR' && !e.repeat) this.teclaR(); });
-
+ 
     this.botonMusica();
     this.textoNota = Soplido.ok
       ? '🎤 Sopla cerca del micrófono de la computadora para apagar la vela'
       : '⌨️ No se detectó micrófono: mantén presionada la barra espaciadora (o la vela) para soplar';
     this.nota.textContent = '🎵 Preparando las velitas... guarda silencio un momento';
-
+ 
     Musica.iniciar();
     await esperar(400);
     await Soplido.calibrar();
     this.nota.textContent = this.textoNota;
-
+ 
     this.mostrar();
     this.ultimo = performance.now();
     this._b = this.bucle.bind(this);
     requestAnimationFrame(this._b);
   },
-
+ 
   botonMusica() {
     if (document.getElementById('btn-musica')) return;
     const b = document.createElement('button');
@@ -216,15 +216,15 @@ const Velas = {
     b.onclick = () => { b.textContent = Musica.alternar() ? '🔇 Música' : '🔊 Música'; };
     this.pantalla.appendChild(b);
   },
-
+ 
   esUltima() { return this.i === TOTAL_VELAS - 1; },
-
+ 
   // Si falta algún mensaje de la vela 28, no escribe nada (pero sigue funcionando)
   textoUltima(clave) {
     const u = CONFIG.ultimaVela || {};
     return Array.isArray(u[clave]) ? u[clave] : ['', ''];
   },
-
+ 
   mostrar() {
     const v = this.vela;
     v.style.opacity = '';
@@ -235,7 +235,8 @@ const Velas = {
     this.llama.classList.remove('apagada');
     this.humo.classList.remove('activo');
     document.getElementById('num-vela').textContent = this.i + 1;
-    this.fase = 'normal';
+    this.fase = this.esUltima() ? 'r' : 'normal'; // la 28 no se apaga hasta presionar R dos veces
+    this.teclasR = 0;
     const [a, b] = (this.esUltima() ? this.textoUltima('pedir') : CONFIG.velas[this.i]) || ['', ''];
     escribirMensaje(this.msg, a, b);
     this.fuerza = 0;
@@ -243,84 +244,53 @@ const Velas = {
     this.apagando = false;
     setTimeout(() => { v.classList.remove('entrando'); this.listo = true; }, 1000);
   },
-
+ 
   bucle(ahora) {
     if (!this.activo) return;
     const dt = Math.min(0.05, (ahora - this.ultimo) / 1000);
     this.ultimo = ahora;
-
+ 
     const nivel = Soplido.nivel();
     const soplando = nivel > Soplido.umbral || Entrada.teclas.Space || this.presionando;
-    const puedeSoplar = this.listo && !this.apagando && this.fase !== 'r';
-
+    const puedeSoplar = this.listo && !this.apagando;
+ 
     if (puedeSoplar) {
       this.fuerza += soplando ? dt * 1.8 : -dt * 0.9;
-      this.fuerza = Math.max(0, Math.min(1, this.fuerza));
+      this.fuerza = Math.max(0, Math.min(this.fase === 'r' ? 0.85 : 1, this.fuerza));
       if (this.fuerza >= 1) this.apagar();
     }
-
-    if (this.fase === 'r') {
-      // la vela tramposa se burla moviéndose
-      const w = Math.sin(ahora / 90);
-      this.llama.style.transform = `rotate(${w * 12}deg) scale(${1 - this.teclasR * 0.2})`;
-    } else {
-      const viento = this.apagando ? 0 : Math.max(this.fuerza, Math.min(1, nivel / (Soplido.umbral * 2)) * 0.5);
-      this.llama.style.transform = `skewX(${-viento * 28}deg) scale(${1 - viento * 0.35}, ${1 - viento * 0.25})`;
-    }
+ 
+    const viento = this.apagando ? 0 : Math.max(this.fuerza, Math.min(1, nivel / (Soplido.umbral * 2)) * 0.5);
+    this.llama.style.transform = `skewX(${-viento * 28}deg) scale(${1 - viento * 0.35}, ${1 - viento * 0.25})`;
     this.relleno.style.width = (this.fuerza * 100) + '%';
-
+ 
     requestAnimationFrame(this._b);
   },
-
+ 
   apagar() {
     this.apagando = true;
-    if (this.esUltima() && this.fase === 'normal') { this.truco(); return; }
-
     this.llama.classList.add('apagada');
     this.humo.classList.add('activo');
     Sonido.soplo();
     Sonido.campanita();
-
+ 
     if (this.esUltima()) { this.liberarDeseos(); return; }
-
+ 
     setTimeout(() => this.vela.classList.add('saliendo'), 1700);
     setTimeout(() => { this.i++; this.mostrar(); }, 2500);
   },
-
-  // La última vela se vuelve a prender sola
-  truco() {
-    this.llama.classList.add('apagada');
-    this.humo.classList.add('activo');
-    Sonido.soplo();
-    setTimeout(() => {
-      this.humo.classList.remove('activo');
-      this.llama.classList.remove('apagada');
-      Sonido.tono(260, 0.35, 'triangle', 0.14, 620);
-      const [a, b] = this.textoUltima('truco');
-      escribirMensaje(this.msg, a, b);
-      this.fase = 'r';
-      this.teclasR = 0;
-      this.fuerza = 0;
-      this.apagando = false;
-      this.nota.textContent = 'Presiona R:  ⚪ ⚪';
-    }, 1100);
-  },
-
+ 
+  // Tecla secreta: R dos veces desbloquea la vela 28 (sin sonido ni avisos)
   teclaR() {
     if (this.fase !== 'r') return;
     this.teclasR++;
-    Sonido.click();
-    this.nota.textContent = 'Presiona R:  ' + (this.teclasR >= 1 ? '🔴' : '⚪') + ' ' + (this.teclasR >= 2 ? '🔴' : '⚪');
     if (this.teclasR >= 2) {
       this.fase = 'lista';
-      this.fuerza = 0;
-      Sonido.desplegar();
       const [a, b] = this.textoUltima('lista');
-      escribirMensaje(this.msg, a, b);
-      setTimeout(() => { this.nota.textContent = this.textoNota; }, 700);
+      if (a || b) escribirMensaje(this.msg, a, b);
     }
   },
-
+ 
   // Los deseos salen de la mecha y se esfuman con el humo
   async liberarDeseos() {
     const [a, b] = this.textoUltima('deseos');
@@ -328,10 +298,10 @@ const Velas = {
     const medidor = document.querySelector('.medidor');
     medidor.style.visibility = 'hidden';
     this.nota.textContent = '';
-
+ 
     const r = this.llama.getBoundingClientRect();
     const x0 = r.left + r.width / 2, y0 = r.bottom - 6;
-
+ 
     let humoActivo = true;
     const generarHumo = () => {
       if (!humoActivo) return;
@@ -339,21 +309,21 @@ const Velas = {
       setTimeout(generarHumo, 140);
     };
     generarHumo();
-
+ 
     const intervalo = 1300, dur = 6200, espera = 1500;
     (CONFIG.deseos || []).forEach((txt, k) => setTimeout(() => this.deseoAlHumo(txt, x0, y0, k, dur), espera + k * intervalo));
-
+ 
     await esperar(espera + (CONFIG.deseos || []).length * intervalo + dur - 2000);
     humoActivo = false;
     await esperar(2500);
-
+ 
     this.pantalla.querySelectorAll('.al-humo').forEach(e => e.remove());
     medidor.style.visibility = '';
     this.activo = false;
     Musica.detener();
     this.alTerminar();
   },
-
+ 
   bocanada(x, y) {
     const s = document.createElement('span');
     s.className = 'al-humo';
@@ -369,7 +339,7 @@ const Velas = {
     ], { duration: azar(2200, 3400), easing: 'ease-out', fill: 'forwards' });
     anim.onfinish = () => s.remove();
   },
-
+ 
   deseoAlHumo(txt, x, y, k, dur) {
     const el = document.createElement('div');
     el.className = 'al-humo cursiva';
@@ -393,7 +363,7 @@ const Velas = {
     anim.onfinish = () => el.remove();
   },
 };
-
+ 
 // ---------- El pastel con las 28 velas ya apagadas ----------
 const Pastel = {
   construir() {
@@ -414,7 +384,7 @@ const Pastel = {
       cont.appendChild(v);
     }
   },
-
+ 
   async mostrar(alTerminar) {
     this.construir();
     const el = document.getElementById('mensaje-pastel');
