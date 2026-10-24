@@ -8,7 +8,7 @@ const CONFIG = {
  
   // Velas 1 a 27: solo ánimo y avance (la 28 es especial, está más abajo)
   velas: [
-    ['Pide un deseo......y sopla la primera vela'],
+    ['Pide un deseo...', 'y sopla la primera vela'],
     ['¡Una menos!', 'vamos por la segunda'],
     ['Tres velitas...', 'esto apenas empieza'],
     [''],
