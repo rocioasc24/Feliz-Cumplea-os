@@ -8,9 +8,15 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Press+Start+2P&family=Quicksand:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
+  <style>
+    .qr-remoto { display: flex; flex-direction: column; align-items: center; gap: 10px; padding-top: 6px; border-top: 1px solid rgba(255,255,255,.15); width: 100%; }
+    .qr-titulo { font-weight: 700; }
+    #qr-codigo { background: #fff; padding: 10px; border-radius: 12px; min-width: 190px; min-height: 190px; display: flex; align-items: center; justify-content: center; color: #222; font-size: .75rem; word-break: break-all; }
+  </style>
 </head>
 <body>
 
+  <!-- 0. INICIO -->
   <section id="pantalla-inicio" class="pantalla activa">
     <h1 class="cursiva">Hay algo esperándote...</h1>
     <p class="subtitulo">Necesito que me prestes tu soplido 🌬️</p>
@@ -18,6 +24,7 @@
     <p id="estado-inicio" class="nota">Al empezar, el navegador te pedirá permiso para usar el micrófono.</p>
   </section>
 
+  <!-- 1. LAS 28 VELAS -->
   <section id="pantalla-velas" class="pantalla">
     <div class="contador"><span id="num-vela">1</span> / 28</div>
     <div id="escenario-vela">
@@ -33,6 +40,7 @@
     <p id="nota-soplo" class="nota"></p>
   </section>
 
+  <!-- 2. EL PASTEL CON LAS VELAS APAGADAS -->
   <section id="pantalla-pastel" class="pantalla">
     <div id="pastel">
       <div id="velas-pastel" class="velas-pastel"></div>
@@ -44,11 +52,13 @@
     <button id="btn-jugar" class="boton oculto">Jugar ▶</button>
   </section>
 
+  <!-- 3. MAPA DE LOS 5 JUEGOS -->
   <section id="pantalla-mapa" class="pantalla">
     <h2 class="cursiva titulo-mapa">Los 5 juegos de tu vida</h2>
     <div id="lista-juegos"></div>
   </section>
 
+  <!-- 4. PANTALLA DE JUEGO -->
   <section id="pantalla-juego" class="pantalla">
     <div class="barra-juego">
       <span id="titulo-juego"></span>
@@ -58,6 +68,7 @@
     <p id="ayuda-juego" class="nota"></p>
   </section>
 
+  <!-- 5. FINAL -->
   <section id="pantalla-final" class="pantalla">
     <canvas id="confeti"></canvas>
     <p id="mensaje-final" class="cursiva mensaje"></p>
@@ -65,17 +76,26 @@
     <button id="btn-repetir" class="boton oculto">Volver a los juegos</button>
   </section>
 
+  <!-- VENTANA EMERGENTE (ganar / perder / instrucciones) -->
   <div id="overlay" class="overlay oculto">
     <div class="caja">
       <h2 id="overlay-titulo"></h2>
       <p id="overlay-texto"></p>
       <button id="overlay-btn" class="boton"></button>
       <button id="overlay-btn2" class="boton-chico oculto"></button>
+      <div id="qr-remoto" class="qr-remoto oculto">
+        <p class="qr-titulo">📱 Usa tu teléfono como pistola</p>
+        <div id="qr-codigo"></div>
+        <p id="qr-estado" class="nota">Preparando el código…</p>
+      </div>
     </div>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script src="mensajes.js"></script>
   <script src="motor.js"></script>
+  <script src="remoto.js"></script>
   <script src="velas.js"></script>
   <script src="juego1-plataformas.js"></script>
   <script src="juego2-dimension.js"></script>
