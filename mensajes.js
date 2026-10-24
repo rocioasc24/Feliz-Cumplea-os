@@ -2,46 +2,48 @@
 //  TEXTOS PERSONALIZABLES
 //  Cambia aquí cualquier frase sin tocar el resto del código.
 //  Cada mensaje tiene dos líneas: ['línea 1', 'línea 2']
+//  Sin mensaje: ['', '']    Una sola línea: ['Hola', '']
 // =====================================================
 const CONFIG = {
   firma: 'Tu hermanita',
- 
+
   // Velas 1 a 27: solo ánimo y avance (la 28 es especial, está más abajo)
   velas: [
     ['Pide un deseo...', 'y sopla la primera vela'],
     ['¡Una menos!', 'vamos por la segunda'],
     ['Tres velitas...', 'esto apenas empieza'],
-    [''],
-    ['Cinco de 28...'],
-    [''],
-    ['Siete...'],
-    ['Ocho velitas'],
-    [''],
-    ['¡Diez!'],
-    [''],
-    [''],
+    ['', ''],
+    ['Cinco de 28...', ''],
+    ['', ''],
+    ['Siete...', ''],
+    ['Ocho velitas', ''],
+    ['', ''],
+    ['¡Diez!', ''],
+    ['', ''],
+    ['', ''],
     ['Trece velitas', 'y contando'],
-    ['¡Ya vas a la mitad!'],
-    [''],
-    ['Dieciséis...'],
-    [''],
+    ['¡Ya vas a la mitad!', ''],
+    ['', ''],
+    ['Dieciséis...', ''],
+    ['', ''],
     ['Dieciocho...', 'ya se ven las últimas'],
-    [''],
+    ['', ''],
     ['¡Veinte!', 'ya te falta poco'],
-    [''],
-    [''],
-    [''],
-    [''],
+    ['', ''],
+    ['', ''],
+    ['', ''],
+    ['', ''],
     ['Veinticinco...', 'ya te falta poquito'],
     ['¡Ya casi!', 'tres velitas más y listo'],
     ['Penúltima velita...', 'después solo queda una'],
   ],
- 
+
   // La vela 28: no se deja apagar a la primera
   ultimaVela: {
     pedir:  ['Ándele...', 'déjame esta velita 🥺'],
+    deseos: ['Y con esta última velita...', 'todos mis deseos para ti ✨'],
   },
- 
+
   // Deseos que se esfuman en el humo de la última vela
   deseos: [
     'Deseo que nunca te falten motivos para sonreír.',
@@ -68,7 +70,7 @@ const CONFIG = {
     'No tienes que ser perfecto para ser alguien extraordinario.',
     'Nunca pierdas esa parte de ti que te hace único.',
   ],
- 
+
   // Mensajes cuando aparece el pastel con las velas apagadas
   pastel: [
     ['28 velitas apagadas...', '...y todos tus deseos ya van en camino'],
@@ -77,20 +79,20 @@ const CONFIG = {
     ['Así que, niño del sol...', '...es hora de probar tus habilidades'],
     ['Te esperan 5 juegos', 'que marcaron parte de tu vida. ¿Listo?'],
   ],
- 
+
   // Mensaje al ganar cada juego (en orden)
   victorias: [
     '¡Yoshi! ¡Mela-mela!',
     'El huevo se rompió... ¡y la dimensión final es tuya!',
     'Estrategia de campeón: impecable.',
     '¡Saliste del laberinto sin un rasguño!',
-    '!jajajaja',
+    '!jajajajaja',
   ],
- 
+
   // Mensajes de la pantalla final
   final: [
     ['¡Lo lograste!', 'Ganaste los 5 juegos, sos buenardo'],
-    ['Viste sigues siendo aquel niño del sol'],
-    ['Feliz cumpleaños número 28, Tuti', 'te quiero muchísimo ❤️'],
+    ['Viste sigues siendo aquel niño del sol', ''],
+    ['Feliz cumpleaños número 28, hermano', 'te quiero muchísimo ❤️'],
   ],
 };
