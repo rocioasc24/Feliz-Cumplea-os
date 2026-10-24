@@ -23,11 +23,11 @@ const CONFIG = {
     ['Doce...', ''],
     ['Trece velitas', 'y contando'],
     ['¡Ya vas a la mitad!', ''],
-    ['Quince', ''],
+    ['Quince...', ''],
     ['Dieciséis...', ''],
-    ['Diecisiete', ''],
+    ['Diecisiete...', ''],
     ['Dieciocho...', 'ya se ven las últimas'],
-    ['Diecinueve', ''],
+    ['Diecinueve...', ''],
     ['¡Veinte!', 'ya te falta poco'],
     ['Veintiuno...', ''],
     ['Veintidós...', ''],
@@ -40,7 +40,7 @@ const CONFIG = {
 
   // La vela 28: no se deja apagar a la primera
   ultimaVela: {
-    pedir:  ['Ándele...', 'déjame esta velita 🥺'],
+    pedir:  ['Ándale...', 'déjame esta velita 🥺'],
     deseos: ['Y con esta última velita...', 'todos mis deseos para ti ✨'],
   },
 
