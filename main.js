@@ -6,16 +6,16 @@ document.addEventListener('DOMContentLoaded', () => {
   const lienzo = $('lienzo');
   const ctx = lienzo.getContext('2d');
   Entrada.init(lienzo);
-
+ 
   const LISTA = [Juegos.plataformas, Juegos.dimension, Juegos.torres, Juegos.bombas, Juegos.patos];
   let desbloqueados = 1;
   const superados = new Set();
   let actual = -1, fallos = 0, enJuego = false;
-
+ 
   function mostrar(id) {
     document.querySelectorAll('.pantalla').forEach(p => p.classList.toggle('activa', p.id === id));
   }
-
+ 
   // ---------- Inicio ----------
   $('btn-empezar').addEventListener('click', async () => {
     Sonido.iniciar();
@@ -28,13 +28,13 @@ document.addEventListener('DOMContentLoaded', () => {
       Pastel.mostrar(() => $('btn-jugar').classList.remove('oculto'));
     });
   });
-
+ 
   $('btn-jugar').addEventListener('click', () => {
     Sonido.click();
     mostrar('pantalla-mapa');
     pintarMapa();
   });
-
+ 
   // ---------- Mapa de juegos ----------
   function pintarMapa() {
     const cont = $('lista-juegos');
@@ -53,7 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
       cont.appendChild(d);
     });
   }
-
+ 
   // ---------- Ventana emergente ----------
   function overlay(titulo, texto, boton, cb, extra) {
     $('overlay-titulo').textContent = titulo;
@@ -73,14 +73,14 @@ document.addEventListener('DOMContentLoaded', () => {
     b.focus();
   }
   function ocultarOverlay() { $('overlay').classList.add('oculto'); }
-
+ 
   // ---------- Juegos ----------
   function detenerActual() {
     if (enJuego && actual >= 0) LISTA[actual].detener();
     enJuego = false;
     lienzo.style.cursor = '';
   }
-
+ 
   function abrirJuego(i) {
     detenerActual();
     actual = i;
@@ -88,36 +88,39 @@ document.addEventListener('DOMContentLoaded', () => {
     const j = LISTA[i];
     mostrar('pantalla-juego');
     $('titulo-juego').textContent = `${i + 1}. ${j.titulo}`;
-    $('ayuda-juego').textContent = j.ayuda;
+    const esPatos = j === Juegos.patos;
+    Remoto.activo = esPatos;
+    Remoto.mostrar(esPatos);
+    $('ayuda-juego').textContent = j.ayuda + (esPatos ? ' (o usa tu teléfono como pistola)' : '');
     ctx.fillStyle = '#07051f';
     ctx.fillRect(0, 0, lienzo.width, lienzo.height);
     overlay(j.titulo, j.intro, '¡A jugar!', arrancar);
   }
-
+ 
   function arrancar() {
     Entrada.teclas = {};
     Entrada.limpiar();
     enJuego = true;
     LISTA[actual].iniciar(ctx, { ganar, perder });
   }
-
+ 
   function marcarSuperado() {
     superados.add(actual);
     desbloqueados = Math.max(desbloqueados, Math.min(LISTA.length, actual + 2));
   }
-
+ 
   function siguiente() {
     if (actual >= LISTA.length - 1) final();
     else abrirJuego(actual + 1);
   }
-
+ 
   function ganar() {
     detenerActual();
     marcarSuperado();
     const ultimo = actual === LISTA.length - 1;
     overlay('¡GANASTE!', CONFIG.victorias[actual] || '¡Muy bien!', ultimo ? 'Continuar ✨' : 'Siguiente juego ▶', siguiente);
   }
-
+ 
   function perder(msg) {
     detenerActual();
     fallos++;
@@ -126,14 +129,16 @@ document.addEventListener('DOMContentLoaded', () => {
       : null;
     overlay('¡Casi!', msg || 'Inténtalo otra vez', 'Intentar de nuevo', arrancar, extra);
   }
-
+ 
   $('btn-menu').addEventListener('click', () => {
     detenerActual();
+    Remoto.activo = false;
+    Remoto.mostrar(false);
     ocultarOverlay();
     mostrar('pantalla-mapa');
     pintarMapa();
   });
-
+ 
   // ---------- Final ----------
   let confetiActivo = false;
   function confeti() {
@@ -164,8 +169,10 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     requestAnimationFrame(paso);
   }
-
+ 
   async function final() {
+    Remoto.activo = false;
+    Remoto.mostrar(false);
     mostrar('pantalla-final');
     Sonido.victoria();
     if (!confetiActivo) confeti();
@@ -180,7 +187,7 @@ document.addEventListener('DOMContentLoaded', () => {
     $('firma').classList.add('visible');
     $('btn-repetir').classList.remove('oculto');
   }
-
+ 
   $('btn-repetir').addEventListener('click', () => {
     confetiActivo = false;
     mostrar('pantalla-mapa');
