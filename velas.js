@@ -403,75 +403,153 @@ const Pastel = {
     const st = document.createElement('style');
     st.id = 'estilos-pastel';
     st.textContent = `
-      #pantalla-pastel { gap: 12px; overflow: hidden; }
+      #pantalla-pastel { gap: 10px; overflow: hidden;
+        background: radial-gradient(ellipse 60% 55% at 50% 48%, rgba(80,200,140,.16), transparent 70%),
+                    radial-gradient(ellipse at 50% 120%, #0d3b2a 0%, transparent 55%); }
       #pantalla-pastel .deco { position: absolute; pointer-events: none; z-index: 0; }
       #pantalla-pastel > :not(.deco) { position: relative; z-index: 1; }
-      #pastel { width: min(800px, 94vw, calc((100vh - 240px) * 800 / 480)); height: auto; margin-top: 50px; }
+      #pastel { width: min(1000px, 96vw, calc((100vh - 270px) * 800 / 480)); height: auto; margin-top: 64px; }
       #lienzo-pastel { width: 100%; height: auto; display: block; cursor: pointer; touch-action: manipulation; }
       #pantalla-pastel #btn-fuegos { position: absolute; right: 22px; bottom: 22px; z-index: 6; }
       #pantalla-pastel #fuegos-pastel { position: fixed; inset: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 5; }
-      #pantalla-pastel .mensaje { min-height: 2.6em; }
-      .bandera { position: absolute; width: 30px; height: 40px; clip-path: polygon(0 0, 100% 0, 50% 100%); transform-origin: 50% 0; animation: ondear 2.4s ease-in-out infinite alternate; }
-      @keyframes ondear { from { transform: rotate(-7deg); } to { transform: rotate(7deg); } }
-      .globo { width: 58px; height: 72px; border-radius: 50% 50% 48% 48% / 55% 55% 45% 45%; animation: flotar 4s ease-in-out infinite alternate; }
-      .globo::before { content: ''; position: absolute; left: 50%; top: 100%; width: 1px; height: 120px; background: rgba(255,255,255,.35); }
-      @keyframes flotar { from { transform: translateY(0) rotate(-4deg); } to { transform: translateY(-24px) rotate(4deg); } }
-      .destello { color: #ffe9a8; animation: brillar 1.8s ease-in-out infinite; }
-      @keyframes brillar { 0%, 100% { opacity: .15; transform: scale(.7); } 50% { opacity: 1; transform: scale(1.15); } }
+      #pantalla-pastel .mensaje { min-height: 2.6em; font-size: clamp(1.6rem, 3.6vw, 2.7rem); }
+
+      .bokeh { border-radius: 50%; filter: blur(6px); animation: bokeh 9s ease-in-out infinite alternate; }
+      @keyframes bokeh { from { transform: translate(0, 0); opacity: .25; } to { transform: translate(18px, -26px); opacity: .6; } }
+
+      .foco { width: 9px; height: 13px; border-radius: 50% 50% 45% 45%; animation: titila 1.6s ease-in-out infinite alternate; }
+      .foco::before { content: ''; position: absolute; left: 2px; top: -4px; width: 5px; height: 5px; background: #3b4a3f; border-radius: 1px; }
+      @keyframes titila { from { opacity: .45; } to { opacity: 1; } }
+
+      .letra { width: 46px; height: 56px; transform-origin: 50% 0; animation: ondear 3s ease-in-out infinite alternate;
+               clip-path: polygon(0 0, 100% 0, 100% 72%, 50% 100%, 0 72%);
+               display: flex; align-items: flex-start; justify-content: center; padding-top: 9px;
+               font-family: 'Quicksand', sans-serif; font-weight: 700; font-size: 26px; line-height: 1; color: #fff;
+               text-shadow: 0 1px 2px rgba(0,0,0,.35); }
+      .letra::after { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 5px; background: rgba(0,0,0,.18); }
+      @keyframes ondear { from { transform: rotate(-4deg); } to { transform: rotate(4deg); } }
+
+      .globo-svg { animation: flotar 5s ease-in-out infinite alternate; transform-origin: 50% 100%; }
+      @keyframes flotar { from { transform: translateY(0) rotate(-3deg); } to { transform: translateY(-18px) rotate(3deg); } }
+
+      .destello { color: #ffe9a8; animation: brillar 2.2s ease-in-out infinite; }
+      @keyframes brillar { 0%, 100% { opacity: .1; transform: scale(.6) rotate(0deg); } 50% { opacity: .95; transform: scale(1.1) rotate(45deg); } }
+
+      .confeti-piso { width: 7px; height: 12px; border-radius: 2px; opacity: .8; }
     `;
     document.head.appendChild(st);
   },
 
+  globoSVG(color, claro, oscuro, ancho) {
+    const id = 'g' + Math.random().toString(36).slice(2, 8);
+    return `<svg width="${ancho}" height="${ancho * 2.5}" viewBox="0 0 60 150">
+      <defs><radialGradient id="${id}" cx="35%" cy="30%" r="75%">
+        <stop offset="0%" stop-color="${claro}"/><stop offset="45%" stop-color="${color}"/><stop offset="100%" stop-color="${oscuro}"/>
+      </radialGradient></defs>
+      <path d="M30 76 C 33 92, 22 104, 30 118 S 28 140, 32 150" stroke="rgba(255,255,255,.45)" stroke-width="1.2" fill="none"/>
+      <path d="M30 2 C 8 2, 2 22, 2 34 C 2 54, 20 70, 30 74 C 40 70, 58 54, 58 34 C 58 22, 52 2, 30 2 Z" fill="url(#${id})"/>
+      <path d="M26 79 L30 73 L34 79 Z" fill="${oscuro}"/>
+      <ellipse cx="19" cy="20" rx="5" ry="9" fill="rgba(255,255,255,.55)" transform="rotate(25 19 20)"/>
+    </svg>`;
+  },
+
   decorar() {
     const p = document.getElementById('pantalla-pastel');
-    if (p.querySelector('.deco')) return;
-    const W = innerWidth;
-    // cuerda de banderines
-    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    svg.classList.add('deco');
-    svg.setAttribute('width', W); svg.setAttribute('height', 140);
-    svg.style.left = '0'; svg.style.top = '0';
-    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-    path.setAttribute('d', `M0 10 Q ${W / 2} 120 ${W} 10`);
-    path.setAttribute('stroke', 'rgba(255,255,255,.55)'); path.setAttribute('stroke-width', '2'); path.setAttribute('fill', 'none');
-    svg.appendChild(path);
-    p.appendChild(svg);
-    const cols = ['#2fae4f', '#ffd45c', '#7be0a0', '#ff8fb8', '#ffffff', '#1f8f4a'];
-    const n = Math.max(10, Math.round(W / 55));
-    for (let k = 0; k < n; k++) {
-      const u = (k + 0.5) / n;
-      const b = document.createElement('div');
-      b.className = 'deco bandera';
-      b.style.left = (u * W - 15) + 'px';
-      b.style.top = (10 + 4 * u * (1 - u) * 55 - 2) + 'px';
-      b.style.background = cols[k % cols.length];
-      b.style.animationDelay = (-k * 0.3) + 's';
-      p.appendChild(b);
+    p.querySelectorAll('.deco').forEach(e => e.remove());
+    const W = innerWidth, H = innerHeight;
+    const agregar = (el, clase) => { el.classList.add('deco'); if (clase) el.classList.add(clase); p.appendChild(el); return el; };
+
+    // luces de fondo difuminadas
+    const tonosBokeh = ['rgba(255,214,120,.5)', 'rgba(120,230,170,.45)', 'rgba(255,160,200,.35)', 'rgba(255,255,255,.3)'];
+    for (let k = 0; k < 22; k++) {
+      const b = agregar(document.createElement('div'), 'bokeh');
+      const s = azar(18, 70);
+      Object.assign(b.style, { width: s + 'px', height: s + 'px', left: azar(0, 100) + '%', top: azar(8, 95) + '%',
+        background: tonosBokeh[k % tonosBokeh.length], animationDelay: (-azar(0, 9)) + 's' });
     }
-    // globos
-    const globos = [
-      ['3%', '30%', '#2fae4f'], ['9%', '52%', '#ffd45c'], ['4%', '68%', '#7be0a0'],
-      ['r3%', '28%', '#7be0a0'], ['r9%', '50%', '#2fae4f'], ['r4%', '70%', '#ffd45c'],
-    ];
-    globos.forEach(([x, y, c], k) => {
-      const g = document.createElement('div');
-      g.className = 'deco globo';
-      if (x.startsWith('r')) g.style.right = x.slice(1); else g.style.left = x;
-      g.style.top = y;
-      g.style.background = `radial-gradient(circle at 32% 28%, rgba(255,255,255,.75) 0 7%, transparent 8%), ${c}`;
-      g.style.animationDelay = (-k * 0.7) + 's';
-      p.appendChild(g);
+
+    // guirnalda de focos
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('width', W); svg.setAttribute('height', 130);
+    svg.style.left = '0'; svg.style.top = '0';
+    const cuerda = (y0, sag) => {
+      const pa = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      pa.setAttribute('d', `M-10 ${y0} Q ${W / 2} ${y0 + sag * 2} ${W + 10} ${y0}`);
+      pa.setAttribute('stroke', '#2c3a30'); pa.setAttribute('stroke-width', '2'); pa.setAttribute('fill', 'none');
+      svg.appendChild(pa);
+    };
+    cuerda(6, 34);
+    agregar(svg);
+    const focos = ['#fff3c4', '#ffd45c', '#9ff0c0', '#ffb3cf'];
+    const nf = Math.round(W / 46);
+    for (let k = 0; k < nf; k++) {
+      const u = (k + 0.5) / nf;
+      const x = -10 + u * (W + 20), y = 6 + 4 * u * (1 - u) * 34;
+      const f = agregar(document.createElement('div'), 'foco');
+      const col = focos[k % focos.length];
+      Object.assign(f.style, { left: (x - 4.5) + 'px', top: (y + 4) + 'px', background: col,
+        boxShadow: `0 0 10px 3px ${col}, 0 0 22px 6px ${col}55`, animationDelay: (-(k % 5) * 0.37) + 's' });
+    }
+
+    // banderín con letras: FELIZ CUMPLE
+    const palabra = 'FELIZ CUMPLE';
+    const colsB = ['#1f8f4a', '#2fae5f', '#d9a93a', '#1f8f4a', '#2fae5f', '#d9a93a'];
+    const ancho = Math.min(46, (W * 0.8) / palabra.length);
+    const total = palabra.length * (ancho + 4);
+    const x0 = W / 2 - total / 2;
+    const svg2 = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg2.setAttribute('width', W); svg2.setAttribute('height', 120);
+    svg2.style.left = '0'; svg2.style.top = '0';
+    const pa2 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    pa2.setAttribute('d', `M${x0 - 30} 34 Q ${W / 2} 74 ${x0 + total + 30} 34`);
+    pa2.setAttribute('stroke', 'rgba(255,240,200,.7)'); pa2.setAttribute('stroke-width', '1.5'); pa2.setAttribute('fill', 'none');
+    svg2.appendChild(pa2);
+    agregar(svg2);
+    [...palabra].forEach((ch, k) => {
+      if (ch === ' ') return;
+      const xc = x0 + k * (ancho + 4) + ancho / 2;
+      const u = (xc - (x0 - 30)) / (total + 60);
+      const y = 34 + 4 * u * (1 - u) * 20;
+      const l = agregar(document.createElement('div'), 'letra');
+      const col = colsB[k % colsB.length];
+      Object.assign(l.style, { left: (xc - ancho / 2) + 'px', top: (y - 1) + 'px', width: ancho + 'px', height: (ancho * 1.22) + 'px',
+        fontSize: (ancho * 0.5) + 'px', background: `linear-gradient(160deg, ${col}, ${col}cc)`, animationDelay: (-k * 0.25) + 's' });
+      l.textContent = ch;
     });
+
+    // racimos de globos en las esquinas
+    const paleta = [
+      ['#2fae5f', '#a8f0c6', '#0f5c2c'], ['#d9a93a', '#fff1b0', '#8a6514'], ['#f2f2f2', '#ffffff', '#b9c2bd'],
+      ['#7be0a0', '#e0ffe9', '#2f8f57'], ['#1f8f4a', '#7fe0a8', '#0b4022'],
+    ];
+    const racimo = (lado) => {
+      const pos = [[0, 30, 64], [52, 0, 70], [96, 46, 58], [30, 92, 54], [78, 110, 50]];
+      pos.forEach(([dx, dy, w], k) => {
+        const [c1, c2, c3] = paleta[(k + (lado === 'der' ? 2 : 0)) % paleta.length];
+        const g = agregar(document.createElement('div'), 'globo-svg');
+        g.innerHTML = this.globoSVG(c1, c2, c3, w);
+        const x = W < 700 ? dx * 0.6 : dx;
+        if (lado === 'izq') g.style.left = (14 + x) + 'px'; else g.style.right = (14 + x) + 'px';
+        g.style.top = (70 + dy) + 'px';
+        g.style.animationDelay = (-k * 0.9) + 's';
+        if (W < 700) g.style.transform = 'scale(.7)';
+      });
+    };
+    racimo('izq'); racimo('der');
+
     // destellos
-    for (let k = 0; k < 18; k++) {
-      const s = document.createElement('div');
-      s.className = 'deco destello';
+    for (let k = 0; k < 16; k++) {
+      const s = agregar(document.createElement('div'), 'destello');
       s.textContent = '✦';
-      s.style.left = azar(2, 96) + '%';
-      s.style.top = azar(12, 92) + '%';
-      s.style.fontSize = azar(10, 22) + 'px';
-      s.style.animationDelay = azar(0, 2) + 's';
-      p.appendChild(s);
+      Object.assign(s.style, { left: azar(4, 96) + '%', top: azar(20, 90) + '%', fontSize: azar(10, 20) + 'px', animationDelay: azar(0, 2.2) + 's' });
+    }
+
+    // confeti en el suelo
+    const colsC = ['#ffd45c', '#2fae5f', '#a8f0c6', '#ff8fb8', '#ffffff'];
+    for (let k = 0; k < 40; k++) {
+      const c = agregar(document.createElement('div'), 'confeti-piso');
+      Object.assign(c.style, { left: azar(0, 100) + '%', top: azar(H - 70, H - 8) + 'px', background: colsC[k % colsC.length],
+        transform: `rotate(${azar(0, 180)}deg)`, opacity: azar(0.35, 0.8) });
     }
   },
 
@@ -527,10 +605,10 @@ const Pastel = {
   },
 
   // ---------- dibujo del pastel (en un lienzo aparte para poder morderlo) ----------
-  piso(c, cx, y1, y2, rx, ry, lado) {
-    const g = c.createLinearGradient(cx - rx, 0, cx + rx, 0);
-    g.addColorStop(0, lado[0]); g.addColorStop(0.45, lado[1]); g.addColorStop(1, lado[2]);
-    c.fillStyle = g;
+  azarFijo(n) { const s = Math.sin(n * 12.9898) * 43758.5453; return s - Math.floor(s); },
+
+  ladoPiso(c, cx, y1, y2, rx, ry, oscuro, medio, claro) {
+    c.save();
     c.beginPath();
     c.moveTo(cx - rx, y1);
     c.lineTo(cx - rx, y2);
@@ -538,82 +616,173 @@ const Pastel = {
     c.lineTo(cx + rx, y1);
     c.ellipse(cx, y1, rx, ry, 0, 0, Math.PI, true);
     c.closePath();
+    const g = c.createLinearGradient(cx - rx, 0, cx + rx, 0);
+    g.addColorStop(0, oscuro); g.addColorStop(0.22, medio); g.addColorStop(0.4, claro);
+    g.addColorStop(0.72, medio); g.addColorStop(1, oscuro);
+    c.fillStyle = g;
     c.fill();
+    c.clip();
+    const v = c.createLinearGradient(0, y1, 0, y2 + ry);
+    v.addColorStop(0, 'rgba(255,255,255,.06)'); v.addColorStop(1, 'rgba(0,30,10,.3)');
+    c.fillStyle = v;
+    c.fillRect(cx - rx, y1 - ry, rx * 2, y2 - y1 + ry * 2);
+    c.restore();
   },
 
-  glaseado(c, cx, y1, rx, ry, color, semilla) {
-    c.fillStyle = color;
-    c.beginPath(); c.ellipse(cx, y1, rx + 3, ry + 3, 0, 0, Math.PI * 2); c.fill();
-    const n = Math.round(rx / 9);
+  cubierta(c, cx, y1, rx, ry, claro, medio, semilla, maxGota) {
+    const n = Math.round(rx / 8.5);
+    // gotas que escurren
     for (let k = 0; k < n; k++) {
-      const a = Math.PI * (0.04 + 0.92 * k / (n - 1));
-      const x = cx + Math.cos(a) * (rx + 1), y = y1 + Math.sin(a) * (ry + 1);
-      const largo = 6 + ((k * 37 + semilla) % 5) * 5;
+      const a = Math.PI * (0.02 + 0.96 * k / (n - 1));
+      const x = cx + Math.cos(a) * rx, y = y1 + Math.sin(a) * ry;
+      const largo = (5 + this.azarFijo(k + semilla) * maxGota) * (0.35 + 0.65 * Math.sin(a));
+      const w = 5 + this.azarFijo(k * 3 + semilla) * 2.5;
+      c.fillStyle = medio;
       c.beginPath();
-      c.moveTo(x - 6, y - 3);
-      c.lineTo(x - 6, y + largo);
-      c.arc(x, y + largo, 6, Math.PI, 0, true);
-      c.lineTo(x + 6, y - 3);
+      c.moveTo(x - w - 2, y - 3);
+      c.quadraticCurveTo(x - w, y + 2, x - w, y + largo * 0.6);
+      c.lineTo(x - w, y + largo);
+      c.arc(x, y + largo, w, Math.PI, 0, true);
+      c.lineTo(x + w, y + largo * 0.6);
+      c.quadraticCurveTo(x + w, y + 2, x + w + 2, y - 3);
       c.closePath();
       c.fill();
+      c.fillStyle = 'rgba(255,255,255,.45)';
+      c.fillRect(x - w + 2, y + 3, 1.6, Math.max(0, largo - 4));
     }
-    c.fillStyle = 'rgba(255,255,255,.35)';
-    c.beginPath(); c.ellipse(cx - rx * 0.25, y1 - ry * 0.25, rx * 0.45, ry * 0.35, 0, 0, Math.PI * 2); c.fill();
+    // grosor del glaseado en la orilla
+    c.fillStyle = medio;
+    c.beginPath(); c.ellipse(cx, y1 + 4, rx + 1, ry + 1, 0, 0, Math.PI * 2); c.fill();
+    // tapa
+    const g = c.createRadialGradient(cx - rx * 0.35, y1 - ry * 0.4, 4, cx, y1, rx * 1.1);
+    g.addColorStop(0, '#ffffff'); g.addColorStop(0.35, claro); g.addColorStop(1, medio);
+    c.fillStyle = g;
+    c.beginPath(); c.ellipse(cx, y1, rx + 2, ry + 2, 0, 0, Math.PI * 2); c.fill();
   },
 
-  perlas(c, cx, y, rx, ry, n) {
+  conchas(c, cx, y, rx, ry, n, color, sombra) {
+    const lista = [];
     for (let k = 0; k < n; k++) {
       const a = Math.PI * (k / (n - 1));
-      const x = cx + Math.cos(a) * rx, yy = y + Math.sin(a) * ry;
-      c.fillStyle = '#fffbe6';
-      c.beginPath(); c.arc(x, yy, 6, 0, Math.PI * 2); c.fill();
-      c.fillStyle = 'rgba(255,255,255,.9)';
-      c.beginPath(); c.arc(x - 2, yy - 2, 2, 0, Math.PI * 2); c.fill();
+      lista.push([cx + Math.cos(a) * rx, y + Math.sin(a) * ry, a]);
+    }
+    lista.sort((p, q) => p[1] - q[1]);
+    for (const [x, yy, a] of lista) {
+      c.save();
+      c.translate(x, yy);
+      c.rotate((a - Math.PI / 2) * 0.35);
+      c.fillStyle = sombra;
+      c.beginPath(); c.ellipse(1, 2, 9, 6.5, 0, 0, Math.PI * 2); c.fill();
+      c.fillStyle = color;
+      c.beginPath(); c.ellipse(0, 0, 8.5, 6, 0, 0, Math.PI * 2); c.fill();
+      c.strokeStyle = sombra; c.lineWidth = 1;
+      c.beginPath(); c.moveTo(-5, -2); c.quadraticCurveTo(0, 3, 5, -2); c.stroke();
+      c.fillStyle = 'rgba(255,255,255,.75)';
+      c.beginPath(); c.ellipse(-2.5, -2.5, 2.5, 1.5, -0.4, 0, Math.PI * 2); c.fill();
+      c.restore();
     }
   },
 
-  texto(c, txt, x, y, tam, relleno) {
+  liston(c, cx, ya, yb, rx, ry) {
+    c.save();
+    c.beginPath();
+    c.moveTo(cx - rx - 0.5, ya);
+    c.ellipse(cx, ya, rx + 0.5, ry, 0, Math.PI, 0, true);
+    c.lineTo(cx + rx + 0.5, yb);
+    c.ellipse(cx, yb, rx + 0.5, ry, 0, 0, Math.PI, false);
+    c.closePath();
+    const g = c.createLinearGradient(cx - rx, 0, cx + rx, 0);
+    g.addColorStop(0, '#6e4c0c'); g.addColorStop(0.25, '#d9a93a'); g.addColorStop(0.42, '#fff1b0');
+    g.addColorStop(0.62, '#e2b54a'); g.addColorStop(1, '#6e4c0c');
+    c.fillStyle = g;
+    c.fill();
+    c.strokeStyle = 'rgba(110,76,12,.7)'; c.lineWidth = 1.2;
+    c.beginPath(); c.ellipse(cx, ya + 1, rx, ry, 0, 0.05, Math.PI - 0.05); c.stroke();
+    c.beginPath(); c.ellipse(cx, yb - 1, rx, ry, 0, 0.05, Math.PI - 0.05); c.stroke();
+    c.restore();
+    // broche al frente
+    const by = (ya + yb) / 2 + ry;
+    c.fillStyle = '#8a6514';
+    c.beginPath(); c.arc(cx, by, 11, 0, Math.PI * 2); c.fill();
+    const gb = c.createRadialGradient(cx - 3, by - 3, 1, cx, by, 10);
+    gb.addColorStop(0, '#fff6c8'); gb.addColorStop(1, '#d9a93a');
+    c.fillStyle = gb;
+    c.beginPath(); c.arc(cx, by, 9.5, 0, Math.PI * 2); c.fill();
+    const ge = c.createRadialGradient(cx - 1.5, by - 1.5, 0.5, cx, by, 5.5);
+    ge.addColorStop(0, '#b8ffd6'); ge.addColorStop(1, '#0f7a3c');
+    c.fillStyle = ge;
+    c.beginPath(); c.arc(cx, by, 5.5, 0, Math.PI * 2); c.fill();
+  },
+
+  florecita(c, x, y, r, color, centro) {
+    c.fillStyle = 'rgba(0,40,20,.25)';
+    for (let k = 0; k < 5; k++) {
+      const a = k * Math.PI * 2 / 5 - Math.PI / 2;
+      c.beginPath(); c.ellipse(x + Math.cos(a) * r * 0.6 + 1, y + Math.sin(a) * r * 0.6 + 1.5, r * 0.55, r * 0.42, a, 0, Math.PI * 2); c.fill();
+    }
+    c.fillStyle = color;
+    for (let k = 0; k < 5; k++) {
+      const a = k * Math.PI * 2 / 5 - Math.PI / 2;
+      c.beginPath(); c.ellipse(x + Math.cos(a) * r * 0.6, y + Math.sin(a) * r * 0.6, r * 0.55, r * 0.42, a, 0, Math.PI * 2); c.fill();
+    }
+    c.fillStyle = centro;
+    c.beginPath(); c.arc(x, y, r * 0.3, 0, Math.PI * 2); c.fill();
+  },
+
+  texto(c, txt, x, y, tam, dorado) {
+    c.save();
     c.font = `${tam}px "Great Vibes", cursive`;
     c.textAlign = 'center';
     c.textBaseline = 'middle';
-    c.lineJoin = 'round';
-    c.strokeStyle = '#0d4f26';
-    c.lineWidth = 5;
-    c.strokeText(txt, x, y);
-    c.fillStyle = relleno;
+    c.shadowColor = 'rgba(0,30,12,.55)';
+    c.shadowBlur = 6;
+    c.shadowOffsetY = 2;
+    if (dorado) {
+      const g = c.createLinearGradient(0, y - tam / 2, 0, y + tam / 2);
+      g.addColorStop(0, '#fff6c8'); g.addColorStop(0.45, '#ffd45c'); g.addColorStop(1, '#b8862a');
+      c.fillStyle = g;
+    } else {
+      c.fillStyle = '#ffffff';
+    }
     c.fillText(txt, x, y);
+    c.shadowColor = 'transparent';
+    c.lineWidth = 0.8;
+    c.strokeStyle = dorado ? 'rgba(110,76,12,.6)' : 'rgba(255,255,255,.4)';
+    c.strokeText(txt, x, y);
+    c.restore();
   },
 
   construirPastel() {
     const c = this.cake.getContext('2d');
     const cx = 400;
     c.clearRect(0, 0, this.W, this.H);
-    // piso de abajo
-    this.piso(c, cx, 290, 410, 190, 22, ['#136b34', '#3fcf78', '#136b34']);
-    this.perlas(c, cx, 410, 186, 20, 24);
-    this.glaseado(c, cx, 290, 190, 22, '#a8f0c6', 3);
-    this.texto(c, 'Feliz cumpleaños', cx, 372, 46, '#ffffff');
-    c.fillStyle = '#ffd45c';
-    c.font = '18px serif';
-    c.fillText('✦', cx - 168, 372); c.fillText('✦', cx + 168, 372);
-    // piso de arriba
-    this.piso(c, cx, 205, 290, 135, 18, ['#1a8a45', '#5fe096', '#1a8a45']);
-    this.glaseado(c, cx, 205, 135, 18, '#c4f7da', 7);
-    this.texto(c, (CONFIG.nombre || 'Alejandro'), cx, 270, 52, '#ffd45c');
-    // rosetas de crema y perlitas doradas entre los pisos
-    for (let k = 0; k < 11; k++) {
-      const a = Math.PI * (0.06 + 0.88 * k / 10);
-      const x = cx + Math.cos(a) * 163, y = 291 + Math.sin(a) * 19;
-      c.fillStyle = '#e3ffee';
-      c.beginPath(); c.arc(x, y, 9, 0, Math.PI * 2); c.fill();
-      c.strokeStyle = '#7fd6a3'; c.lineWidth = 2;
-      c.beginPath(); c.arc(x, y, 5, 0.3, Math.PI * 1.7); c.stroke();
-      if (k < 10) {
-        const b = Math.PI * (0.06 + 0.88 * (k + 0.5) / 10);
-        c.fillStyle = '#ffd45c';
-        c.beginPath(); c.arc(cx + Math.cos(b) * 163, 291 + Math.sin(b) * 19, 3, 0, Math.PI * 2); c.fill();
-      }
+
+    // ----- piso de abajo -----
+    this.ladoPiso(c, cx, 270, 400, 185, 26, '#0b4f26', '#1f9a52', '#4fd88c');
+    this.liston(c, cx, 362, 380, 185, 26);
+    this.conchas(c, cx, 401, 186, 26, 30, '#c9f7dc', '#6cc596');
+    this.texto(c, 'Feliz cumpleaños', cx, 344, 44, false);
+    this.florecita(c, cx - 156, 336, 9, '#ffffff', '#ffd45c');
+    this.florecita(c, cx - 166, 358, 6, '#fff6c8', '#d9a93a');
+    this.florecita(c, cx + 156, 336, 9, '#ffffff', '#ffd45c');
+    this.florecita(c, cx + 166, 358, 6, '#fff6c8', '#d9a93a');
+    this.cubierta(c, cx, 270, 185, 26, '#d9fbe7', '#9fe8bf', 3, 24);
+
+    // ----- piso de arriba -----
+    this.ladoPiso(c, cx, 178, 270, 132, 19, '#0f5c2c', '#2fae5f', '#6ee6a2');
+    this.conchas(c, cx, 271, 133, 19, 22, '#e3ffee', '#7fd6a3');
+    // hojitas de oro
+    c.fillStyle = '#e8c45a';
+    for (let k = 0; k < 8; k++) {
+      const lado = k % 2 ? 1 : -1;
+      const x = cx + lado * (102 + this.azarFijo(k + 40) * 20);
+      const y = 212 + this.azarFijo(k + 70) * 60;
+      c.save(); c.translate(x, y); c.rotate(this.azarFijo(k + 9) * 3);
+      c.beginPath(); c.moveTo(-3, -1); c.lineTo(1, -3); c.lineTo(3, 1); c.lineTo(-1, 3); c.closePath(); c.fill();
+      c.restore();
     }
+    this.texto(c, (CONFIG.nombre || 'Alejandro'), cx, 244, 50, true);
+    this.cubierta(c, cx, 178, 132, 19, '#e8fff1', '#b4f0cf', 9, 18);
   },
 
   crearVelas() {
@@ -621,8 +790,8 @@ const Pastel = {
     for (let k = 0; k < 28; k++) {
       const fila = k < 14 ? 0 : 1, idx = k % 14;
       v.push({
-        x: 400 - 115 + idx * 17.7 + (fila ? 6 : 0),
-        y: 205 + (fila ? 8 : -6),
+        x: 400 - 112 + idx * 17.2 + (fila ? 6 : 0),
+        y: 178 + (fila ? 8 : -6),
         color: this.colores[k % this.colores.length],
         viva: true,
         humo: azar(0, 2),
@@ -636,40 +805,54 @@ const Pastel = {
     c.translate(x, y);
     c.rotate(rot);
     c.globalAlpha = alfa;
-    c.fillStyle = '#fff';
-    c.fillRect(-4, -38, 8, 38);
+    c.fillStyle = 'rgba(0,40,20,.25)';
+    c.beginPath(); c.ellipse(1, 0, 6, 2, 0, 0, Math.PI * 2); c.fill();
+    c.fillStyle = '#fffdf6';
+    c.fillRect(-3.5, -40, 7, 40);
     c.save();
-    c.beginPath(); c.rect(-4, -38, 8, 38); c.clip();
-    c.strokeStyle = color; c.lineWidth = 3;
-    for (let s = -48; s < 12; s += 7) { c.beginPath(); c.moveTo(-6, s); c.lineTo(6, s - 8); c.stroke(); }
+    c.beginPath(); c.rect(-3.5, -40, 7, 40); c.clip();
+    c.strokeStyle = color; c.lineWidth = 2.6;
+    for (let s = -50; s < 12; s += 7) { c.beginPath(); c.moveTo(-6, s); c.lineTo(6, s - 7); c.stroke(); }
+    const g = c.createLinearGradient(-3.5, 0, 3.5, 0);
+    g.addColorStop(0, 'rgba(255,255,255,.5)'); g.addColorStop(0.5, 'rgba(255,255,255,0)'); g.addColorStop(1, 'rgba(0,0,0,.22)');
+    c.fillStyle = g; c.fillRect(-3.5, -40, 7, 40);
     c.restore();
-    c.fillStyle = 'rgba(0,0,0,.12)'; c.fillRect(1, -38, 3, 38);
-    c.strokeStyle = '#333'; c.lineWidth = 1.5;
-    c.beginPath(); c.moveTo(0, -38); c.lineTo(0, -44); c.stroke();
+    c.fillStyle = '#fffdf6';
+    c.beginPath(); c.ellipse(0, -40, 3.5, 1.4, 0, 0, Math.PI * 2); c.fill();
+    c.strokeStyle = '#2a2a2a'; c.lineWidth = 1.4;
+    c.beginPath(); c.moveTo(0, -40); c.quadraticCurveTo(1, -43, 0, -46); c.stroke();
     c.restore();
   },
 
   dibujarBase(c) {
-    // resplandor
     c.save();
-    c.translate(400, 290);
+    c.translate(400, 300);
     c.scale(2, 1);
-    const g = c.createRadialGradient(0, 0, 10, 0, 0, 185);
-    g.addColorStop(0, 'rgba(120,255,170,.24)'); g.addColorStop(1, 'rgba(120,255,170,0)');
+    const g = c.createRadialGradient(0, 0, 10, 0, 0, 190);
+    g.addColorStop(0, 'rgba(140,255,190,.2)'); g.addColorStop(1, 'rgba(140,255,190,0)');
     c.fillStyle = g;
-    c.beginPath(); c.arc(0, 0, 185, 0, Math.PI * 2); c.fill();
+    c.beginPath(); c.arc(0, 0, 190, 0, Math.PI * 2); c.fill();
     c.restore();
-    // base dorada
-    c.fillStyle = '#b8892a';
-    c.beginPath(); c.ellipse(400, 466, 85, 11, 0, 0, Math.PI * 2); c.fill();
-    c.fillStyle = '#d9a93a';
-    c.beginPath(); c.moveTo(382, 432); c.lineTo(418, 432); c.lineTo(432, 464); c.lineTo(368, 464); c.closePath(); c.fill();
-    const gp = c.createLinearGradient(175, 0, 625, 0);
-    gp.addColorStop(0, '#b8892a'); gp.addColorStop(0.5, '#ffe08a'); gp.addColorStop(1, '#b8892a');
+    // pie de la base
+    const gp = c.createLinearGradient(330, 0, 470, 0);
+    gp.addColorStop(0, '#8a6514'); gp.addColorStop(0.45, '#ffe9a0'); gp.addColorStop(1, '#8a6514');
     c.fillStyle = gp;
-    c.beginPath(); c.ellipse(400, 428, 225, 28, 0, 0, Math.PI * 2); c.fill();
-    c.fillStyle = 'rgba(255,255,255,.25)';
-    c.beginPath(); c.ellipse(400, 424, 205, 20, 0, 0, Math.PI * 2); c.fill();
+    c.beginPath(); c.ellipse(400, 470, 88, 9, 0, 0, Math.PI * 2); c.fill();
+    c.beginPath();
+    c.moveTo(384, 436); c.quadraticCurveTo(392, 452, 372, 468); c.lineTo(428, 468); c.quadraticCurveTo(408, 452, 416, 436);
+    c.closePath(); c.fill();
+    // plato: borde y superficie
+    const gr = c.createLinearGradient(168, 0, 632, 0);
+    gr.addColorStop(0, '#7a5610'); gr.addColorStop(0.3, '#e2b54a'); gr.addColorStop(0.45, '#fff1b0'); gr.addColorStop(1, '#7a5610');
+    c.fillStyle = gr;
+    c.beginPath(); c.ellipse(400, 410, 232, 34, 0, 0, Math.PI * 2); c.fill();
+    const gs = c.createRadialGradient(330, 395, 10, 400, 404, 230);
+    gs.addColorStop(0, '#ffffff'); gs.addColorStop(1, '#dfe9e3');
+    c.fillStyle = gs;
+    c.beginPath(); c.ellipse(400, 404, 222, 28, 0, 0, Math.PI * 2); c.fill();
+    // sombra del pastel sobre el plato
+    c.fillStyle = 'rgba(0,50,25,.28)';
+    c.beginPath(); c.ellipse(406, 404, 196, 27, 0, 0, Math.PI * 2); c.fill();
   },
 
   // ---------- interacción ----------
@@ -763,7 +946,7 @@ const Pastel = {
     Sonido.campanita();
     const r = this.lienzo.getBoundingClientRect();
     const esc = r.width / this.W;
-    const x0 = r.left + 400 * esc, y0 = r.top + 320 * esc;
+    const x0 = r.left + 400 * esc, y0 = r.top + 300 * esc;
     for (let k = 0; k < 8; k++) {
       const lado = k % 2 ? 1 : -1;
       this.platos.push({
@@ -843,7 +1026,7 @@ const Pastel = {
       if (!v.viva) continue;
       v.humo -= dt;
       if (v.humo <= 0) {
-        v.humo = azar(0.8, 2.4);
+        v.humo = azar(1.6, 4.2);
         this.humos.push({ x: v.x, y: v.y - 46, vx: azar(-8, 8), vy: azar(-35, -20), t: 0 });
       }
     }
@@ -906,12 +1089,12 @@ const Pastel = {
       c.globalAlpha = 1;
     } else {
       c.fillStyle = '#fff1c9';
-      [[-60, 418], [-20, 425], [30, 420], [70, 426], [5, 430]].forEach(([dx, y]) => c.fillRect(400 + dx, y, 4, 3));
+      [[-60, 398], [-20, 405], [30, 400], [70, 408], [5, 412], [-95, 404], [110, 399]].forEach(([dx, y]) => c.fillRect(400 + dx, y, 4, 3));
     }
     for (const v of this.velas) if (v.viva) this.dibujarVela(c, v.x, v.y, v.color);
     for (const o of this.volando) this.dibujarVela(c, o.x, o.y, o.color, Math.max(0, 1 - o.t / 1.2), o.rot);
     for (const h of this.humos) {
-      c.fillStyle = `rgba(230,230,245,${0.5 * (1 - h.t / 2.2)})`;
+      c.fillStyle = `rgba(230,230,245,${0.28 * (1 - h.t / 2.2)})`;
       c.beginPath(); c.arc(h.x, h.y, 3 + h.t * 5, 0, Math.PI * 2); c.fill();
     }
     for (const m of this.migas) { c.fillStyle = m.color; c.fillRect(m.x, m.y, 4, 4); }
